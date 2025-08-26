@@ -14,8 +14,6 @@ out vec4 fragColor;
 void main() {
 	vec2 uv = getSignedUV(u_resolution);
 
-	vec3 color = vec3(0);
-
 	vec3 sdf = vec3(0);
 	switch (shape) {
 		case 0:
@@ -25,9 +23,9 @@ void main() {
 			sdf.x = sdBox(uv, size);
 			break;
 	}
+
 	float d = sdf.x;
 	d = smoothstep(.01, .0, d);
-	color += d;
 
-	fragColor = vec4(color, 1.0);
+	fragColor = vec4(vec3(d), 1.0);
 }

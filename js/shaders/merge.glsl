@@ -1,0 +1,21 @@
+#version 300 es
+
+precision mediump float;
+
+#include "util/common.glsl"
+#include "util/sdf.glsl"
+
+uniform vec2 u_resolution;
+uniform sampler2D u_textureA;
+uniform sampler2D u_textureB;
+
+out vec4 fragColor;
+
+void main() {
+	vec2 uv = getUV(u_resolution);
+	// fragColor = texture(u_textureB, uv);
+	vec4 texA = texture(u_textureA, uv);
+	vec4 texB = texture(u_textureB, uv);
+	vec3 m = vec3(max(texA.xyz, texB.xyz));
+	fragColor = vec4(m, min(texA.w, texB.w));
+}

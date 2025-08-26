@@ -18,8 +18,18 @@
 			type="notjs"
 		></script>
 		<script
+			id="merge-frag"
+			src="js/shaders/merge.glsl"
+			type="notjs"
+		></script>
+		<script
 			id="color-frag"
 			src="js/shaders/color.glsl"
+			type="notjs"
+		></script>
+		<script
+			id="texture-frag"
+			src="js/shaders/texture.glsl"
 			type="notjs"
 		></script>
 	</head>
@@ -71,23 +81,20 @@
 			// Init WebGL/TWGL
 			twgl.setDefaults({ attribPrefix: 'a_' });
 			const gl = document.getElementById('c').getContext('webgl2');
-			// gl.
-			const shapeProgram = twgl.createProgramInfo(gl, [
-				'basic-vert',
-				'shape-frag',
-			]);
 
-			const colorProgram = twgl.createProgramInfo(gl, [
-				'basic-vert',
-				'color-frag',
-			]);
+			const createFragShader = (frag) => {
+				return twgl.createProgramInfo(gl, ['basic-vert', frag]);
+			};
 
-			const fbi = twgl.createFramebufferInfo(gl);
-			// console.log(fbi);
+			const shapeProgram = createFragShader('shape-frag');
+			const mergeProgram = createFragShader('merge-frag');
+			const colorProgram = createFragShader('color-frag');
+			const textureProgram = createFragShader('texture-frag');
 
-			// const textures = twgl.createTextures(gl, {
-			// 	fromCanvas: { src: gl.canvas },
-			// });
+			const fbis = Array.from({ length: 4 }, () =>
+				twgl.createFramebufferInfo(gl),
+			);
+			const [fbiA, fbiB, fbiC, fbiD] = fbis;
 
 			const arrays = {
 				position: [
@@ -101,11 +108,37 @@
 			};
 			const bufferInfo = twgl.createBufferInfoFromArrays(gl, arrays);
 
+			const SHAPE = {
+				CIRCLE: 0,
+				BOX: 1,
+			};
+			const shapes = [
+				{
+					shape: SHAPE.CIRCLE,
+					size: [0.5, 0.5],
+				},
+				{
+					shape: SHAPE.BOX,
+					size: [0.7, 0.3],
+				},
+			];
+
+			const clearBuffer = (fbi) => {
+				gl.bindFramebuffer(gl.FRAMEBUFFER, fbi.framebuffer);
+				gl.clearColor(0, 0, 0, 0);
+				gl.clear(gl.COLOR_BUFFER_BIT);
+				gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+			};
+
 			function render(time) {
 				twgl.resizeCanvasToDisplaySize(gl.canvas);
 				const resolution = [gl.canvas.width, gl.canvas.height];
-				twgl.resizeFramebufferInfo(gl, fbi, undefined, ...resolution);
 				gl.viewport(0, 0, ...resolution);
+
+				const resizeArgs = [undefined, ...resolution];
+				fbis.forEach((fbi) => {
+					twgl.resizeFramebufferInfo(gl, fbi, ...resizeArgs);
+				});
 
 				gl.enable(gl.BLEND);
 				gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -115,33 +148,37 @@
 					u_resolution: resolution,
 				};
 
-				const SHAPE = {
-					CIRCLE: 0,
-					BOX: 1,
-				};
-				const shapeUniforms = {
-					...commonUniforms,
-					shape: SHAPE.CIRCLE,
-					size: [0.75, 0.75],
+				const draw = (programInfo, fbi = null, uniforms = {}) => {
+					twgl.bindFramebufferInfo(gl, fbi);
+					gl.useProgram(programInfo.program);
+					twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);
+					twgl.setUniforms(programInfo, {
+						...commonUniforms,
+						...uniforms,
+					});
+					twgl.drawBufferInfo(gl, bufferInfo);
 				};
 
-				gl.useProgram(shapeProgram.program);
-				twgl.bindFramebufferInfo(gl, fbi);
-				twgl.setBuffersAndAttributes(gl, shapeProgram, bufferInfo);
-				twgl.setUniforms(shapeProgram, shapeUniforms);
-				twgl.drawBufferInfo(gl, bufferInfo);
+				// draw shape
+				draw(shapeProgram, fbiA, shapes[0]);
+				draw(shapeProgram, fbiB, shapes[1]);
+				draw(mergeProgram, fbiC, {
+					u_textureA: fbiA.attachments[0],
+					u_textureB: fbiB.attachments[0],
+				});
 
-				const colorUniforms = {
-					...commonUniforms,
+				// draw color
+				draw(colorProgram, fbiD, {
 					color: [1, 0.5, 1],
-					maskTexture: fbi.attachments[0],
-				};
+					maskTexture: fbiC.attachments[0],
+				});
+				//
+				// clearBuffer(fbiA);
 
-				twgl.bindFramebufferInfo(gl, null);
-				gl.useProgram(colorProgram.program);
-				twgl.setBuffersAndAttributes(gl, colorProgram, bufferInfo);
-				twgl.setUniforms(colorProgram, colorUniforms);
-				twgl.drawBufferInfo(gl, bufferInfo);
+				// draw texture to canvas
+				draw(textureProgram, null, {
+					u_texture: fbiD.attachments[0],
+				});
 			}
 			requestAnimationFrame(render);
 		</script>
