@@ -4,6 +4,10 @@
 #define PI  3.141592
 
 vec2 getUV(vec2 res) {
+	return gl_FragCoord.xy / res;
+}
+
+vec2 getSignedUV(vec2 res) {
 	return (gl_FragCoord.xy * 2. - res.xy) / min(res.x, res.y);
 }
 

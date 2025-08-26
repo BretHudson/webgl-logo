@@ -7,8 +7,21 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>WebGL Logo</title>
 		<script src="js/twgl-full.js"></script>
-		<script id="vs" src="js/shaders/vertex.glsl" type="notjs"></script>
-		<script id="fs" src="js/shaders/fragment.glsl" type="notjs"></script>
+		<script
+			id="basic-vert"
+			src="js/shaders/basic.vert"
+			type="notjs"
+		></script>
+		<script
+			id="shape-frag"
+			src="js/shaders/shape.glsl"
+			type="notjs"
+		></script>
+		<script
+			id="color-frag"
+			src="js/shaders/color.glsl"
+			type="notjs"
+		></script>
 	</head>
 	<body>
 		<canvas id="c"></canvas>
@@ -17,18 +30,64 @@
 			const shaders = [
 				...document.querySelectorAll('[src][type="notjs"]'),
 			];
-			const promises = shaders.map((shader) => {
-				return fetch(shader.src)
+
+			// TODO(bret): cache the shaders
+
+			const loadShader = async (src) => {
+				return fetch(src)
 					.then((res) => res.text())
-					.then((text) => {
-						shader.text = text;
+					.then(async (text) => {
+						const regex = /#include "(?<fileName>[\w\/\.\-\_]+)"/g;
+
+						const matches = text.matchAll(regex);
+
+						const replacements = await Promise.all(
+							matches.map((match) => {
+								const { fileName } = match.groups;
+								// TODO(bret): this hack is gonna break at some point probably
+								return loadShader(src + '/../' + fileName).then(
+									(content) => [fileName, content],
+								);
+							}),
+						);
+
+						let finalText = text;
+						replacements.forEach(([fileName, content]) => {
+							finalText = finalText.replace(
+								`#include "${fileName}"`,
+								content,
+							);
+						});
+
+						return finalText;
 					});
+			};
+
+			const promises = shaders.map(async (shader) => {
+				shader.text = await loadShader(shader.src);
 			});
 			await Promise.all(promises);
 
 			// Init WebGL/TWGL
-			const gl = document.getElementById('c').getContext('webgl');
-			const programInfo = twgl.createProgramInfo(gl, ['vs', 'fs']);
+			twgl.setDefaults({ attribPrefix: 'a_' });
+			const gl = document.getElementById('c').getContext('webgl2');
+			// gl.
+			const shapeProgram = twgl.createProgramInfo(gl, [
+				'basic-vert',
+				'shape-frag',
+			]);
+
+			const colorProgram = twgl.createProgramInfo(gl, [
+				'basic-vert',
+				'color-frag',
+			]);
+
+			const fbi = twgl.createFramebufferInfo(gl);
+			// console.log(fbi);
+
+			// const textures = twgl.createTextures(gl, {
+			// 	fromCanvas: { src: gl.canvas },
+			// });
 
 			const arrays = {
 				position: [
@@ -44,19 +103,45 @@
 
 			function render(time) {
 				twgl.resizeCanvasToDisplaySize(gl.canvas);
-				gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+				const resolution = [gl.canvas.width, gl.canvas.height];
+				twgl.resizeFramebufferInfo(gl, fbi, undefined, ...resolution);
+				gl.viewport(0, 0, ...resolution);
 
-				const uniforms = {
-					u_time: time * 0.001,
-					u_resolution: [gl.canvas.width, gl.canvas.height],
+				gl.enable(gl.BLEND);
+				gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+				const commonUniforms = {
+					// u_time: time * 0.001,
+					u_resolution: resolution,
 				};
 
-				gl.useProgram(programInfo.program);
-				twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);
-				twgl.setUniforms(programInfo, uniforms);
+				const SHAPE = {
+					CIRCLE: 0,
+					BOX: 1,
+				};
+				const shapeUniforms = {
+					...commonUniforms,
+					shape: SHAPE.CIRCLE,
+					size: [0.75, 0.75],
+				};
+
+				gl.useProgram(shapeProgram.program);
+				twgl.bindFramebufferInfo(gl, fbi);
+				twgl.setBuffersAndAttributes(gl, shapeProgram, bufferInfo);
+				twgl.setUniforms(shapeProgram, shapeUniforms);
 				twgl.drawBufferInfo(gl, bufferInfo);
 
-				// requestAnimationFrame(render);
+				const colorUniforms = {
+					...commonUniforms,
+					color: [1, 0.5, 1],
+					maskTexture: fbi.attachments[0],
+				};
+
+				twgl.bindFramebufferInfo(gl, null);
+				gl.useProgram(colorProgram.program);
+				twgl.setBuffersAndAttributes(gl, colorProgram, bufferInfo);
+				twgl.setUniforms(colorProgram, colorUniforms);
+				twgl.drawBufferInfo(gl, bufferInfo);
 			}
 			requestAnimationFrame(render);
 		</script>
