@@ -91,10 +91,10 @@
 			const colorProgram = createFragShader('color-frag');
 			const textureProgram = createFragShader('texture-frag');
 
-			const fbis = Array.from({ length: 4 }, () =>
+			const fbis = Array.from({ length: 5 }, () =>
 				twgl.createFramebufferInfo(gl),
 			);
-			const [fbiA, fbiB, fbiC, fbiD] = fbis;
+			const [fbiTemp, fbiA, fbiB, fbiC, fbiD] = fbis;
 
 			const arrays = {
 				position: [
@@ -115,11 +115,21 @@
 			const shapes = [
 				{
 					shape: SHAPE.CIRCLE,
-					size: [0.5, 0.5],
+					size: [0.2, 0.2],
 				},
 				{
 					shape: SHAPE.BOX,
-					size: [0.7, 0.3],
+					size: [0.1, 0.3],
+				},
+				{
+					shape: SHAPE.CIRCLE,
+					pos: [0.15, 0.35],
+					size: [0.1, 0.1],
+				},
+				{
+					shape: SHAPE.CIRCLE,
+					pos: [-0.15, -0.35],
+					size: [0.1, 0.1],
 				},
 			];
 
@@ -159,18 +169,32 @@
 					twgl.drawBufferInfo(gl, bufferInfo);
 				};
 
-				// draw shape
-				draw(shapeProgram, fbiA, shapes[0]);
-				draw(shapeProgram, fbiB, shapes[1]);
-				draw(mergeProgram, fbiC, {
-					u_textureA: fbiA.attachments[0],
-					u_textureB: fbiB.attachments[0],
-				});
+				const merge = (srcA, srcB) => {
+					draw(mergeProgram, fbiTemp, {
+						u_textureA: srcA.attachments[0],
+						u_textureB: srcB.attachments[0],
+					});
+
+					draw(textureProgram, srcA, {
+						u_texture: fbiTemp.attachments[0],
+					});
+					clearBuffer(fbiTemp);
+				};
+
+				// draw shapes
+				if (shapes.length > 0) {
+					draw(shapeProgram, fbiA, shapes[0]);
+					for (let i = 1, n = shapes.length; i < n; ++i) {
+						draw(shapeProgram, fbiB, shapes[i]);
+						merge(fbiA, fbiB);
+						clearBuffer(fbiB);
+					}
+				}
 
 				// draw color
 				draw(colorProgram, fbiD, {
 					color: [1, 0.5, 1],
-					maskTexture: fbiC.attachments[0],
+					maskTexture: fbiA.attachments[0],
 				});
 				//
 				// clearBuffer(fbiA);

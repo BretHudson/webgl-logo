@@ -7,6 +7,7 @@ precision mediump float;
 
 uniform vec2 u_resolution;
 uniform int shape;
+uniform vec2 pos;
 uniform vec2 size;
 
 out vec4 fragColor;
@@ -17,10 +18,10 @@ void main() {
 	vec3 sdf = vec3(0);
 	switch (shape) {
 		case 0:
-			sdf = sdgCircle(uv, size.x);
+			sdf = sdgCircle(uv - pos, size.x);
 			break;
 		case 1:
-			sdf.x = sdBox(uv, size);
+			sdf.x = sdBox(uv - pos, size);
 			break;
 	}
 
