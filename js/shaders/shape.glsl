@@ -16,12 +16,13 @@ void main() {
 	vec2 uv = getSignedUV(u_resolution);
 
 	vec3 sdf = vec3(0);
+	vec2 p = uv - pos;
 	switch (shape) {
 		case 0:
-			sdf = sdgCircle(uv - pos, size.x);
+			sdf = sdgEllipse(p, size);
 			break;
 		case 1:
-			sdf.x = sdBox(uv - pos, size);
+			sdf.x = sdBox(p, size);
 			break;
 	}
 

@@ -17,5 +17,5 @@ void main() {
 	vec4 texA = texture(u_textureA, uv);
 	vec4 texB = texture(u_textureB, uv);
 	vec3 m = vec3(max(texA.xyz, texB.xyz));
-	fragColor = vec4(m, min(texA.w, texB.w));
+	fragColor = vec4(m, max(texA.w, texB.w));
 }
