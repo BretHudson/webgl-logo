@@ -19,6 +19,11 @@
 			type="notjs"
 		></script>
 		<script
+			id="shape-sweep-frag"
+			src="js/shaders/shape-sweep.glsl"
+			type="notjs"
+		></script>
+		<script
 			id="merge-frag"
 			src="js/shaders/merge.glsl"
 			type="notjs"
@@ -93,6 +98,7 @@
 			};
 
 			const shapeProgram = createFragShader('shape-frag');
+			const shapeSweepProgram = createFragShader('shape-sweep-frag');
 			const mergeProgram = createFragShader('merge-frag');
 			const colorProgram = createFragShader('color-frag');
 			const solidColorProgram = createFragShader('solid-color-frag');
@@ -120,25 +126,28 @@
 				BOX: 1,
 			};
 
-			// const sweep = [0.5, 0.2];
-			const sweep = [0.4, -0.4];
+			// const sweep = [0.4, 0];
+			const sweep = [0.15, -0.15];
 			const rectSize = [0.1, 0.3];
 			const shapes = [
 				{
 					shape: SHAPE.ELLIPSE,
-					size: [0.2, 0.2],
+					size: [0.2, 0.4],
 					sweep,
-					pos: [0, 0],
+					pos: [-0.5, 0.5],
+					// trans: true,
 				},
 				{
 					shape: SHAPE.BOX,
 					size: rectSize,
 					sweep,
+					// trans: true,
 					pos: [0, 0],
 				},
 				{
 					shape: SHAPE.BOX,
 					size: rectSize,
+					trans: true,
 					pos: [0, 0],
 				},
 				{
@@ -146,12 +155,14 @@
 					pos: [0.2, 0.4],
 					size: [0.1, 0.1],
 					sweep,
+					// trans: true,
 				},
 				{
 					shape: SHAPE.BOX,
 					pos: [-0.2, -0.4],
 					size: [0.1, 0.1],
 					sweep,
+					// trans: true,
 				},
 			];
 
@@ -163,7 +174,7 @@
 			};
 
 			function render(time) {
-				console.time('render');
+				// console.time('render');
 				twgl.resizeCanvasToDisplaySize(gl.canvas);
 				const resolution = [gl.canvas.width, gl.canvas.height];
 				gl.viewport(0, 0, ...resolution);
@@ -209,6 +220,21 @@
 
 					const { pos = [0, 0], sweep } = uniforms;
 
+					programInfo = shapeSweepProgram;
+
+					const v = Victor.fromArray(pos);
+					const rd = Victor.fromArray(sweep);
+
+					draw(programInfo, fbi, {
+						...uniforms,
+						pos: v.toArray(),
+					});
+				};
+
+				const sweep2 = (programInfo, fbi = null, uniforms = {}) => {
+					clearBuffer(fbi);
+					const { pos = [0, 0], sweep } = uniforms;
+
 					const v = Victor.fromArray(pos);
 					const rd = Victor.fromArray(sweep);
 
@@ -245,6 +271,8 @@
 						});
 						merge(fbi, fbiTemp2);
 					}
+
+					clearBuffer(fbiTemp2);
 				};
 
 				// draw sweeps
@@ -261,6 +289,7 @@
 				// draw color
 				draw(colorProgram, fbiC, {
 					color: [1, 0.5, 1, 0.8],
+					// color: [1, 0.5, 1, 1],
 					maskTexture: fbiA.attachments[0],
 				});
 
@@ -295,8 +324,8 @@
 				draw(textureProgram, null, {
 					u_texture: fbiD.attachments[0],
 				});
-				console.timeEnd('render');
-				// requestAnimationFrame(render);
+				// console.timeEnd('render');
+				requestAnimationFrame(render);
 			}
 			requestAnimationFrame(render);
 		</script>

@@ -6,6 +6,9 @@ precision mediump float;
 #include "util/math.glsl"
 #include "util/sdf.glsl"
 
+#define MIN_DIST .0001
+#define MAX_DIST 10.
+
 uniform vec2 u_resolution;
 uniform float u_time;
 uniform int shape;
@@ -22,27 +25,46 @@ vec2 closestPointOnSegment(vec2 p, vec2 a, vec2 b) {
 	return a + t * ba;
 }
 
+vec3 map(vec2 p, vec2 size) {
+	vec3 sdf = vec3(999.);
+	switch (shape) {
+		case 0:
+			sdf = sdgEllipse(p, size);
+			break;
+		case 1:
+			sdf.x = sdBox(p, size);
+			break;
+	}
+	return sdf;
+}
+
 void main() {
 	vec2 uv = getSignedUV(u_resolution);
 
-	vec3 sdf = vec3(9999.);
-	vec2 ss = normalize(sweep);
-	float n = length(sweep);
-	vec2 p1 = uv - pos;
+	vec3 sdf = vec3(1e6);
 
-	for (float t = 0.; t <= n; t += .0025) {
-		vec2 p = p1 - ss * t;
-		switch (shape) {
-			case 0:
-				sdf = min(sdf, sdgEllipse(p, size));
-				break;
-			case 1:
-				sdf.x = min(sdf.x, sdBox(p, size));
-				break;
-		}
+	vec2 sweepV = sweep * rot2D(u_time * .25);
+	float sweepLength = length(sweepV);
+
+	vec2 ro = (uv - pos) - sweepV;
+	vec2 rd = normalize(sweepV);
+
+	float t = 0.;
+	for (int i = 0; i < 1000; ++i) {
+		vec2 p = ro + rd * t;
+		float d = map(p, size).x;
+		t += d;
+		if (abs(d) < MIN_DIST || t > MAX_DIST)
+			break;
 	}
 
-	sdf.x = smoothstep(.01, .0, sdf.x);
+	if (t <= sweepLength) {
+		vec2 p = ro + rd * t;
+		sdf = map(p, size);
+	}
+
+	sdf.x = smoothstep(1., .0, sdf.x);
+	// sdf.y = t / sweepLength;
 
 	fragColor = vec4(sdf, 1.0);
 }
