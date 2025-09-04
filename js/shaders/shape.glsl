@@ -27,7 +27,7 @@ void main() {
 	}
 
 	float d = sdf.x;
-	d = smoothstep(.01, .0, d);
+	d = smoothstep(.0, -.001, d);
 
 	fragColor = vec4(vec3(d), 1.0);
 }
