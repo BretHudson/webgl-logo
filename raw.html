@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="color-scheme" content="dark light" />
+		<link rel="stylesheet" href="./css/styles.css" media="screen" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>WebGL Logo</title>
+		<script src="js/victor.js"></script>
+		<script src="js/twgl-full.js"></script>
+		<script
+			id="basic-vert"
+			src="js/shaders/basic.vert"
+			type="notjs"
+		></script>
+		<script
+			id="shape-frag"
+			src="js/shaders/shape.glsl"
+			type="notjs"
+		></script>
+		<script
+			id="shape-sweep-frag"
+			src="js/shaders/shape-sweep.glsl"
+			type="notjs"
+		></script>
+		<script
+			id="merge-frag"
+			src="js/shaders/merge.glsl"
+			type="notjs"
+		></script>
+		<script
+			id="color-frag"
+			src="js/shaders/color.glsl"
+			type="notjs"
+		></script>
+		<script
+			id="solid-color-frag"
+			src="js/shaders/solid-color.glsl"
+			type="notjs"
+		></script>
+		<script
+			id="texture-frag"
+			src="js/shaders/texture.glsl"
+			type="notjs"
+		></script>
+	</head>
+	<body>
+		<canvas id="c"></canvas>
+		<script type="module" src="js/main.js"></script>
+	</body>
+</html>

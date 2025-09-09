@@ -19,8 +19,16 @@ body {
 	gap: 1rem; */
 }
 
+#root {
+	border: 5px solid red;
+	/* display: none; */
+	min-height: 100%;
+}
+
 canvas {
 	display: block;
 	width: 100%;
 	height: 100%;
+	border: 3px dashed white;
+	/* padding: 5px; */
 }
