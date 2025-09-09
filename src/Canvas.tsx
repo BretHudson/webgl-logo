@@ -1,3 +1,7 @@
 export function Canvas() {
-	return <canvas id="c"></canvas>;
+	return (
+		<div className="canvas-wrapper">
+			<canvas id="c"></canvas>
+		</div>
+	);
 }

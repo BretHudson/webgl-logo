@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Victor from 'victor';
 import * as twgl from 'twgl.js';
 import { Canvas } from './Canvas';
@@ -9,9 +9,54 @@ import mergeFrag from '../js/shaders/merge.glsl';
 import colorFrag from '../js/shaders/color.glsl';
 import solidColorFrag from '../js/shaders/solid-color.glsl';
 import textureFrag from '../js/shaders/texture.glsl';
+import { hashShape, SHAPE } from './types';
+import type { Vec2, Shape, Uniforms } from './types';
+import { ShapeInput } from './ShapeInput';
 
+const sweep: Vec2 = [0.15, -0.15];
+const rectSize: Vec2 = [0.1, 0.3];
 function App() {
 	const [gl, setGL] = useState<WebGL2RenderingContext>();
+
+	const shapes: Shape[] = useMemo(
+		() => [
+			{
+				shape: SHAPE.ELLIPSE,
+				size: [0.2, 0.4],
+				sweep,
+				pos: [-0.5, 0.5],
+				// trans: true,
+			},
+			{
+				shape: SHAPE.BOX,
+				size: rectSize,
+				sweep,
+				// trans: true,
+				pos: [0, 0],
+			},
+			{
+				shape: SHAPE.BOX,
+				size: rectSize,
+				trans: true,
+				pos: [0, 0],
+			},
+			{
+				shape: SHAPE.BOX,
+				pos: [0.2, 0.4],
+				size: [0.1, 0.1],
+				sweep,
+				// trans: true,
+			},
+			{
+				shape: SHAPE.BOX,
+				pos: [-0.2, -0.4],
+				size: [0.1, 0.1],
+				sweep,
+				// trans: true,
+			},
+		],
+		[],
+	);
 
 	useEffect(() => {
 		twgl.setDefaults({ attribPrefix: 'a_' });
@@ -58,57 +103,7 @@ function App() {
 		};
 		const bufferInfo = twgl.createBufferInfoFromArrays(gl, arrays);
 
-		const SHAPE = {
-			ELLIPSE: 0,
-			BOX: 1,
-		} as const;
-
 		// const sweep = [0.4, 0];
-		const sweep = [0.15, -0.15] as [number, number];
-		const rectSize = [0.1, 0.3] as [number, number];
-		interface Shape {
-			shape: (typeof SHAPE)[keyof typeof SHAPE];
-			size: [number, number];
-			sweep?: [number, number];
-			pos?: [number, number];
-			trans?: boolean;
-		}
-		const shapes: Shape[] = [
-			{
-				shape: SHAPE.ELLIPSE,
-				size: [0.2, 0.4],
-				sweep,
-				pos: [-0.5, 0.5],
-				// trans: true,
-			},
-			{
-				shape: SHAPE.BOX,
-				size: rectSize,
-				sweep,
-				// trans: true,
-				pos: [0, 0],
-			},
-			{
-				shape: SHAPE.BOX,
-				size: rectSize,
-				trans: true,
-				pos: [0, 0],
-			},
-			{
-				shape: SHAPE.BOX,
-				pos: [0.2, 0.4],
-				size: [0.1, 0.1],
-				sweep,
-				// trans: true,
-			},
-			{
-				shape: SHAPE.BOX,
-				pos: [-0.2, -0.4],
-				size: [0.1, 0.1],
-				sweep,
-				// trans: true,
-			},
-		];
 
 		let handle = 0;
 
@@ -167,11 +162,6 @@ function App() {
 					u_texture: fbiTemp.attachments[0],
 				});
 				clearBuffer(fbiTemp);
-			};
-
-			type Uniforms = {
-				pos?: [number, number];
-				sweep?: [number, number];
 			};
 
 			const sweep = (
@@ -244,19 +234,26 @@ function App() {
 				u_texture: fbiD.attachments[0],
 			});
 			// console.timeEnd('render');
-			handle = requestAnimationFrame(render);
+			// handle = requestAnimationFrame(render);
 		}
 		handle = requestAnimationFrame(render);
 
 		return () => {
 			cancelAnimationFrame(handle);
 		};
-	}, [gl]);
+	}, [gl, shapes]);
 
 	return (
-		<>
+		<div className="grid">
+			<div>
+				{shapes.map((shape, i) => {
+					return (
+						<ShapeInput key={hashShape(shape, i)} shape={shape} />
+					);
+				})}
+			</div>
 			<Canvas />
-		</>
+		</div>
 	);
 }
 
