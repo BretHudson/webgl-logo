@@ -1,17 +1,17 @@
-import { useEffect, useMemo, useState } from 'react';
-import Victor from 'victor';
+import { useCallback, useEffect, useState } from 'react';
 import * as twgl from 'twgl.js';
-import { Canvas } from './Canvas';
+import Victor from 'victor';
 import basicVert from '../js/shaders/basic.vert';
-import shapeFrag from '../js/shaders/shape.glsl';
-import shapeSweepFrag from '../js/shaders/shape-sweep.glsl';
-import mergeFrag from '../js/shaders/merge.glsl';
 import colorFrag from '../js/shaders/color.glsl';
+import mergeFrag from '../js/shaders/merge.glsl';
+import shapeSweepFrag from '../js/shaders/shape-sweep.glsl';
+import shapeFrag from '../js/shaders/shape.glsl';
 import solidColorFrag from '../js/shaders/solid-color.glsl';
 import textureFrag from '../js/shaders/texture.glsl';
-import { hashShape, SHAPE } from './types';
-import type { Vec2, Shape, Uniforms, ShapeId } from './types';
+import { Canvas } from './Canvas';
 import { ShapeInput } from './ShapeInput';
+import type { Shape, Uniforms, Vec2 } from './types';
+import { hashShape, SHAPE } from './types';
 
 const sweep: Vec2 = [0.15, -0.15];
 const rectSize: Vec2 = [0.1, 0.3];
@@ -20,6 +20,7 @@ function App() {
 
 	const [shapes, setShapes] = useState<Shape[]>([
 		{
+			id: 0,
 			shape: SHAPE.ELLIPSE,
 			size: [0.2, 0.4],
 			sweep,
@@ -27,6 +28,7 @@ function App() {
 			// trans: true,
 		},
 		{
+			id: 1,
 			shape: SHAPE.BOX,
 			size: rectSize,
 			sweep,
@@ -34,12 +36,14 @@ function App() {
 			pos: [0, 0],
 		},
 		{
+			id: 2,
 			shape: SHAPE.BOX,
 			size: rectSize,
 			trans: true,
 			pos: [0, 0],
 		},
 		{
+			id: 3,
 			shape: SHAPE.BOX,
 			pos: [0.2, 0.4],
 			size: [0.1, 0.1],
@@ -47,6 +51,7 @@ function App() {
 			// trans: true,
 		},
 		{
+			id: 4,
 			shape: SHAPE.BOX,
 			pos: [-0.2, -0.4],
 			size: [0.1, 0.1],
@@ -54,6 +59,8 @@ function App() {
 			// trans: true,
 		},
 	]);
+
+	const [shapeOrder, setShapeOrder] = useState([0, 1, 2, 3, 4]);
 
 	useEffect(() => {
 		twgl.setDefaults({ attribPrefix: 'a_' });
@@ -75,17 +82,26 @@ function App() {
 			return twgl.createProgramInfo(gl, [basicVert, frag]);
 		};
 
-		const shapeProgram = createFragShader(shapeFrag);
-		const shapeSweepProgram = createFragShader(shapeSweepFrag);
-		const mergeProgram = createFragShader(mergeFrag);
-		const colorProgram = createFragShader(colorFrag);
-		const solidColorProgram = createFragShader(solidColorFrag);
-		const textureProgram = createFragShader(textureFrag);
+		const [
+			shapeProgram,
+			shapeSweepProgram,
+			mergeProgram,
+			colorProgram,
+			solidColorProgram,
+			textureProgram,
+		] = [
+			shapeFrag,
+			shapeSweepFrag,
+			mergeFrag,
+			colorFrag,
+			solidColorFrag,
+			textureFrag,
+		].map(createFragShader);
 
 		const fbis = Array.from({ length: 6 }, () =>
 			twgl.createFramebufferInfo(gl),
 		);
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars -- it fine
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		const [fbiTemp, fbiTemp2, fbiA, fbiB, fbiC, fbiD] = fbis;
 
 		const arrays = {
@@ -99,8 +115,6 @@ function App() {
 			].flat(),
 		};
 		const bufferInfo = twgl.createBufferInfoFromArrays(gl, arrays);
-
-		// const sweep = [0.4, 0];
 
 		let handle = 0;
 
@@ -240,26 +254,50 @@ function App() {
 		};
 	}, [gl, shapes]);
 
+	const updateShape = useCallback(
+		(id: number, key: string, value: unknown) => {
+			setShapes((shapes) => {
+				const item = shapes[id];
+				const newShapes = [...shapes];
+				newShapes[id] = {
+					...item,
+					[key]: value,
+				};
+				return newShapes;
+			});
+		},
+		[],
+	);
+
+	const moveShape = useCallback((id: number, dir: -1 | 1) => {
+		setShapeOrder((shapeOrder) => {
+			const index = shapeOrder.indexOf(id);
+			const newIndex = index + dir;
+			if (newIndex < 0 || newIndex >= shapeOrder.length)
+				return shapeOrder;
+
+			const newShapeOrder = [...shapeOrder];
+			const item = newShapeOrder.splice(index, 1);
+			newShapeOrder.splice(newIndex, 0, ...item);
+			return newShapeOrder;
+		});
+	}, []);
+
 	return (
 		<div className="grid">
-			<div>
-				{shapes.map((shape, i) => {
-					const onChange = (
-						e: React.ChangeEvent<HTMLSelectElement>,
-					) => {
-						const _shapes = [...shapes];
-						const { value } = e.target;
-						_shapes[i] = {
-							...shape,
-							shape: +value as ShapeId,
-						};
-						setShapes(_shapes);
-					};
+			<div className="shape-inputs">
+				{shapeOrder.map((id, i) => {
+					const first = i === 0;
+					const last = i === shapeOrder.length - 1;
+					const shape = shapes[id];
 					return (
 						<ShapeInput
-							key={hashShape(shape, i)}
-							shape={shape}
-							onChange={onChange}
+							key={hashShape(shape)}
+							shapeInfo={shape}
+							updateShape={updateShape}
+							moveShape={moveShape}
+							canMoveUp={!first}
+							canMoveDown={!last}
 						/>
 					);
 				})}

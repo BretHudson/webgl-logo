@@ -7,10 +7,11 @@ export interface Uniforms {
 
 export type ShapeId = (typeof SHAPE)[keyof typeof SHAPE];
 export interface Shape {
+	id: number;
 	shape: ShapeId;
 	size: Vec2;
 	sweep?: Vec2;
-	pos?: Vec2;
+	pos: Vec2;
 	trans?: boolean;
 }
 
@@ -19,6 +20,6 @@ export const SHAPE = {
 	BOX: 1,
 } as const;
 
-export const hashShape = (shape: Shape, i: number | string = '') => {
-	return [shape.shape, shape.pos, shape.size, i].filter(Boolean).join('-');
+export const hashShape = (shape: Shape) => {
+	return shape.id;
 };
