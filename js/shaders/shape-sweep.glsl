@@ -28,10 +28,10 @@ vec2 closestPointOnSegment(vec2 p, vec2 a, vec2 b) {
 vec3 map(vec2 p, vec2 size) {
 	vec3 sdf = vec3(999.);
 	switch (shape) {
-		case 0:
+		case 1:
 			sdf = sdgEllipse(p, size);
 			break;
-		case 1:
+		case 2:
 			sdf.x = sdBox(p, size);
 			break;
 	}

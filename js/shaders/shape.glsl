@@ -21,10 +21,10 @@ void main() {
 	vec2 p = uv - pos;
 	p *= rot2D(-rot / 180. * PI);
 	switch (shape) {
-		case 0:
+		case 1:
 			sdf = sdgEllipse(p, size);
 			break;
-		case 1:
+		case 2:
 			sdf.x = sdBox(p, size);
 			break;
 	}

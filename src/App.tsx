@@ -21,6 +21,14 @@ function App() {
 
 	const [shapes, setShapes] = useState<Shape[]>([
 		{
+			id: -1,
+			shape: SHAPE.GROUP,
+			pos: [-0.5, 0.5],
+			rot: 0,
+			size: [0.2, 0.4],
+			sweep: [...sweep],
+		},
+		{
 			id: 0,
 			shape: SHAPE.ELLIPSE,
 			pos: [-0.5, 0.5],
@@ -62,7 +70,7 @@ function App() {
 		},
 	]);
 
-	const [shapeOrder, setShapeOrder] = useState([0, 1, 2, 3, 4]);
+	const [shapeOrder, setShapeOrder] = useState([[-1, 0, 1], 2, 3, 4]);
 
 	useEffect(() => {
 		twgl.setDefaults({ attribPrefix: 'a_' });
@@ -256,7 +264,7 @@ function App() {
 				rot: 0,
 			});
 			// console.timeEnd('render');
-			handle = requestAnimationFrame(render);
+			// handle = requestAnimationFrame(render);
 		}
 		handle = requestAnimationFrame(render);
 
@@ -296,6 +304,9 @@ function App() {
 	const moveShape = useCallback((id: number, dir: -1 | 1) => {
 		setShapeOrder((shapeOrder) => {
 			const index = shapeOrder.indexOf(id);
+			// TODO(bret): handle nested items
+			if (index === -1) return shapeOrder;
+
 			const newIndex = index + dir;
 			if (newIndex < 0 || newIndex >= shapeOrder.length)
 				return shapeOrder;
@@ -307,26 +318,36 @@ function App() {
 		});
 	}, []);
 
+	function mapShapes(id: number | number[], i: number) {
+		const first = i === 0;
+		const last = i === shapeOrder.length - 1;
+
+		const [targetId, childIds] = Array.isArray(id)
+			? [id[0], id.slice(1)]
+			: [id, undefined];
+
+		const shape = shapes.find(({ id }) => id === targetId);
+		if (!shape) throw new Error('???');
+
+		const children = childIds && childIds.map(mapShapes);
+
+		return (
+			<ShapeInput
+				key={hashShape(shape)}
+				shapeInfo={shape}
+				updateShape={updateShape}
+				moveShape={moveShape}
+				canMoveUp={!first}
+				canMoveDown={!last}
+			>
+				{children}
+			</ShapeInput>
+		);
+	}
+
 	return (
 		<div className="grid">
-			<div className="shape-inputs">
-				{shapeOrder.map((id, i) => {
-					const first = i === 0;
-					const last = i === shapeOrder.length - 1;
-					const shape = shapes.find(({ id: _id }) => _id === id);
-					if (!shape) throw new Error('???');
-					return (
-						<ShapeInput
-							key={hashShape(shape)}
-							shapeInfo={shape}
-							updateShape={updateShape}
-							moveShape={moveShape}
-							canMoveUp={!first}
-							canMoveDown={!last}
-						/>
-					);
-				})}
-			</div>
+			<div className="shape-inputs">{shapeOrder.map(mapShapes)}</div>
 			<Canvas />
 		</div>
 	);

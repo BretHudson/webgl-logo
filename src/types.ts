@@ -17,8 +17,9 @@ export interface Shape {
 }
 
 export const SHAPE = {
-	ELLIPSE: 0,
-	BOX: 1,
+	GROUP: 0,
+	ELLIPSE: 1,
+	BOX: 2,
 } as const;
 
 export const hashShape = (shape: Shape) => {

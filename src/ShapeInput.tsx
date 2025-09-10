@@ -8,6 +8,7 @@ interface ShapeInputProps {
 	moveShape: (id: number, dir: -1 | 1) => void;
 	canMoveUp: boolean;
 	canMoveDown: boolean;
+	children?: React.ReactNode;
 }
 
 const entries = Object.entries(SHAPE);
@@ -18,6 +19,7 @@ export function ShapeInput({
 	moveShape,
 	canMoveUp,
 	canMoveDown,
+	children,
 }: ShapeInputProps) {
 	const { id, shape, pos, rot, size, sweep = [0, 0], trans } = shapeInfo;
 
@@ -100,6 +102,12 @@ export function ShapeInput({
 					onChange={(e) => updateShape(id, 'trans', e.target.checked)}
 				/>
 			</div>
+			{children ? (
+				<div className="children">
+					<div>Children</div>
+					{children}
+				</div>
+			) : null}
 		</div>
 	);
 }
