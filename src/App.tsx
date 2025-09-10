@@ -288,10 +288,11 @@ function App() {
 	const updateShape = useCallback(
 		(id: number, key: string, value: unknown) => {
 			setShapes((shapes) => {
-				const item = shapes.find(({ id: _id }) => _id === id);
+				const i = shapes.findIndex(({ id: _id }) => _id === id);
+				const item = shapes[i];
 				if (!item) throw new Error('???');
 				const newShapes = [...shapes];
-				newShapes[id] = {
+				newShapes[i] = {
 					...item,
 					[key]: value,
 				};
