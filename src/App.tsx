@@ -18,8 +18,8 @@ function App() {
 			id: -2,
 			shape: SHAPE.GROUP,
 			pos: [0, 0],
-			// rot: 0,
-			rot: 100,
+			rot: 0,
+			// rot: 100,
 			size: [0, 0],
 			sweep: [0, 0],
 		},
@@ -27,8 +27,8 @@ function App() {
 			id: -1,
 			shape: SHAPE.GROUP,
 			pos: [0, 0],
-			// rot: 0,
-			rot: 100,
+			rot: 0,
+			// rot: 100,
 			size: [0, 0],
 			sweep: [0, 0],
 		},
@@ -36,7 +36,8 @@ function App() {
 			id: 0,
 			shape: SHAPE.ELLIPSE,
 			pos: [0.4, 0],
-			rot: 180,
+			rot: 0,
+			// rot: 180,
 			size: [0.2, 0.2],
 			sweep: [...sweep],
 		},
@@ -78,12 +79,15 @@ function App() {
 		{ nodeId: 2 },
 		{ nodeId: 4 },
 		{ nodeId: 3 },
+		// { nodeId: 0 }, { nodeId: 1 }
 		{
 			nodeId: -2,
 			childrenItems: [
 				{ nodeId: -1, childrenItems: [{ nodeId: 0 }, { nodeId: 1 }] },
 			],
 		},
+
+		// { nodeId: -1, childrenItems: [{ nodeId: 0 }, { nodeId: 1 }] },
 	]);
 	const glRef = useRef<GLRef>({
 		shapes,

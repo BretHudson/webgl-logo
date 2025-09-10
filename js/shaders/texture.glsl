@@ -6,7 +6,6 @@ precision mediump float;
 #include "util/math.glsl"
 
 uniform vec2 u_resolution;
-uniform float u_time;
 uniform sampler2D u_texture;
 uniform vec2 pos;
 uniform vec2 origin;

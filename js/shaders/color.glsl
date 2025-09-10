@@ -15,5 +15,6 @@ out vec4 fragColor;
 void main() {
 	vec2 uv = getUV(u_resolution);
 	vec4 mask = texture(maskTexture, uv);
-	fragColor = vec4(color.xyz, color.a * mask.x);
+	float alpha = color.a * mask.x;
+	fragColor = vec4(color.xyz * alpha, alpha);
 }

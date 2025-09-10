@@ -61,8 +61,7 @@ export function useRenderer(ref: React.RefObject<GLRef>) {
 		const fbis = Array.from({ length: 16 }, () =>
 			twgl.createFramebufferInfo(gl),
 		);
-		// a  eslint-disable-next-line @typescript-eslint/no-unused-vars
-		// const [fbiTemp, fbiTemp2, fbiA, fbiB, fbiC, fbiD, fbiX, fbiY] = fbis;
+
 		const freeFbis = [...fbis];
 		const alloc = () => {
 			const fbi = freeFbis.pop();
@@ -88,8 +87,8 @@ export function useRenderer(ref: React.RefObject<GLRef>) {
 
 		let handle = 0;
 
-		const clearBuffer = (fbi: twgl.FramebufferInfo) => {
-			gl.bindFramebuffer(gl.FRAMEBUFFER, fbi.framebuffer);
+		const clearBuffer = (fbi: twgl.FramebufferInfo | null) => {
+			gl.bindFramebuffer(gl.FRAMEBUFFER, fbi?.framebuffer ?? null);
 			gl.clearColor(0, 0, 0, 0);
 			gl.clear(gl.COLOR_BUFFER_BIT);
 			gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -111,7 +110,12 @@ export function useRenderer(ref: React.RefObject<GLRef>) {
 			});
 
 			gl.enable(gl.BLEND);
-			gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+			gl.blendFuncSeparate(
+				gl.ONE,
+				gl.ONE_MINUS_SRC_ALPHA,
+				gl.ONE,
+				gl.ONE_MINUS_SRC_ALPHA,
+			);
 
 			const commonUniforms = {
 				u_time: time * 0.001,
@@ -136,25 +140,9 @@ export function useRenderer(ref: React.RefObject<GLRef>) {
 				twgl.drawBufferInfo(gl, bufferInfo);
 			};
 
-			const merge = (
-				srcA: twgl.FramebufferInfo,
-				srcB: twgl.FramebufferInfo,
-			) => {
-				const fbiTemp = alloc();
-				draw(mergeProgram, fbiTemp, {
-					u_textureA: srcA.attachments[0],
-					u_textureB: srcB.attachments[0],
-				});
-
-				draw(textureProgram, srcA, {
-					u_texture: fbiTemp.attachments[0],
-					origin: [0.5, 0.5],
-				});
-				free(fbiTemp);
-			};
-
 			// draw background color
-			draw(solidColorProgram, null);
+			clearBuffer(null);
+			// draw(solidColorProgram, null);
 
 			const drawShape = (shape: Shape, target: twgl.FramebufferInfo) => {
 				if (shape.sweep && shape.sweep[0] > 0) {
@@ -162,12 +150,11 @@ export function useRenderer(ref: React.RefObject<GLRef>) {
 					const fbiB = alloc();
 					draw(shapeSweepProgram, fbiA, shape);
 					draw(colorProgram, fbiB, {
-						color: [1, 0.5, 1, 0.8],
+						color: [1, 0.5, 1, 0.75],
 						maskTexture: fbiA.attachments[0],
 					});
 					draw(textureProgram, target, {
 						u_texture: fbiB.attachments[0],
-						origin: [0.5, 0.5],
 					});
 					free(fbiA);
 					free(fbiB);
@@ -208,11 +195,14 @@ export function useRenderer(ref: React.RefObject<GLRef>) {
 						draw(textureProgram, fbi, {
 							u_texture: groupFbi.attachments[0],
 							...shape,
+							pos: [0.1, 0],
 							origin: [0.5, 0.5],
 						});
 						free(groupFbi);
 					}
-					merge(target, fbi);
+					draw(textureProgram, target, {
+						u_texture: fbi.attachments[0],
+					});
 					free(fbi);
 				}
 			};
@@ -220,33 +210,42 @@ export function useRenderer(ref: React.RefObject<GLRef>) {
 			const fbi = alloc();
 			drawItems(shapeOrder, fbi);
 
-			draw(textureProgram, null, {
+			const temp = alloc();
+			draw(textureProgram, temp, {
 				u_texture: fbi.attachments[0],
 				pos: [0, 0],
 				origin: [0.5, 0.5],
 				rot: 0,
 			});
+			draw(textureProgram, null, {
+				u_texture: temp.attachments[0],
+				pos: [0, 0],
+				origin: [0.5, 0.5],
+				rot: 0,
+			});
 			free(fbi);
+			free(temp);
 
 			// console.timeEnd('render');
-			// handle = requestAnimationFrame(render);
+			handle = requestAnimationFrame(render);
 		}
 		handle = requestAnimationFrame(render);
 
 		return () => {
 			cancelAnimationFrame(handle);
 		};
-	}, [
-		gl,
-		ref,
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		...[
-			shapeFrag,
-			shapeSweepFrag,
-			mergeFrag,
-			colorFrag,
-			solidColorFrag,
-			textureFrag,
-		],
-	]);
+	});
+	// , [
+	// 	gl,
+	// 	ref,
+	// 	// eslint-disable-next-line react-hooks/exhaustive-deps
+	// 	...[
+	// 		shapeFrag,
+	// 		shapeSweepFrag,
+	// 		mergeFrag,
+	// 		colorFrag,
+	// 		solidColorFrag,
+	// 		textureFrag,
+	// 	],
+	// ]);
 }
