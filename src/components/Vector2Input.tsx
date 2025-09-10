@@ -1,7 +1,7 @@
 type Vec2 = [number, number];
 export function Vector2Input({
 	name,
-	// system = 'cartesian',
+	system = 'cartesian',
 	value,
 	onChange,
 }: {
@@ -24,7 +24,7 @@ export function Vector2Input({
 			<input
 				name={`${name}-y`}
 				type="number"
-				step=".1"
+				step={system === 'cartesian' ? 0.1 : 5}
 				value={value[1]}
 				onChange={(e) => {
 					onChange([value[0], +e.target.value]);

@@ -3,11 +3,13 @@
 precision mediump float;
 
 #include "util/common.glsl"
+#include "util/math.glsl"
 #include "util/sdf.glsl"
 
 uniform vec2 u_resolution;
 uniform int shape;
 uniform vec2 pos;
+uniform float rot;
 uniform vec2 size;
 
 out vec4 fragColor;
@@ -17,6 +19,7 @@ void main() {
 
 	vec3 sdf = vec3(0);
 	vec2 p = uv - pos;
+	p *= rot2D(rot / 180. * PI);
 	switch (shape) {
 		case 0:
 			sdf = sdgEllipse(p, size);

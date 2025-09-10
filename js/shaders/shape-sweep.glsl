@@ -13,6 +13,7 @@ uniform vec2 u_resolution;
 uniform float u_time;
 uniform int shape;
 uniform vec2 pos;
+uniform float rot;
 uniform vec2 size;
 uniform vec2 sweep;
 
@@ -52,6 +53,8 @@ void main() {
 	float t = 0.;
 	for (int i = 0; i < 1000; ++i) {
 		vec2 p = ro + rd * t;
+
+		p *= rot2D(rot / 180. * PI);
 		float d = map(p, size).x;
 		t += d;
 		if (abs(d) < MIN_DIST || t > MAX_DIST)

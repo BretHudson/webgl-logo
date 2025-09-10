@@ -9,9 +9,10 @@ export type ShapeId = (typeof SHAPE)[keyof typeof SHAPE];
 export interface Shape {
 	id: number;
 	shape: ShapeId;
+	pos: Vec2;
+	rot: number;
 	size: Vec2;
 	sweep?: Vec2;
-	pos: Vec2;
 	trans?: boolean;
 }
 

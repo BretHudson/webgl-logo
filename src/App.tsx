@@ -24,6 +24,7 @@ function App() {
 			id: 0,
 			shape: SHAPE.ELLIPSE,
 			pos: [-0.5, 0.5],
+			rot: 0,
 			size: [0.2, 0.4],
 			sweep: [...sweep],
 		},
@@ -31,13 +32,23 @@ function App() {
 			id: 1,
 			shape: SHAPE.BOX,
 			pos: [0, 0],
+			rot: 0,
 			size: [...rectSize],
+			sweep: [...sweep],
+		},
+		{
+			id: 2,
+			shape: SHAPE.BOX,
+			pos: [0, 0.75],
+			rot: 45,
+			size: [0.1, 0.1],
 			sweep: [...sweep],
 		},
 		{
 			id: 3,
 			shape: SHAPE.BOX,
 			pos: [0.2, 0.4],
+			rot: 0,
 			size: [0.1, 0.1],
 			sweep: [...sweep],
 		},
@@ -45,12 +56,13 @@ function App() {
 			id: 4,
 			shape: SHAPE.BOX,
 			pos: [-0.2, -0.4],
+			rot: 0,
 			size: [0.1, 0.1],
 			sweep: [...sweep],
 		},
 	]);
 
-	const [shapeOrder, setShapeOrder] = useState([0, 1, 3, 4]);
+	const [shapeOrder, setShapeOrder] = useState([0, 1, 2, 3, 4]);
 
 	useEffect(() => {
 		twgl.setDefaults({ attribPrefix: 'a_' });
@@ -247,7 +259,8 @@ function App() {
 	const updateShape = useCallback(
 		(id: number, key: string, value: unknown) => {
 			setShapes((shapes) => {
-				const item = shapes[id];
+				const item = shapes.find(({ id: _id }) => _id === id);
+				if (!item) throw new Error('???');
 				const newShapes = [...shapes];
 				newShapes[id] = {
 					...item,

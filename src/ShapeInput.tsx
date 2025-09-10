@@ -19,7 +19,7 @@ export function ShapeInput({
 	canMoveUp,
 	canMoveDown,
 }: ShapeInputProps) {
-	const { id, shape, size, pos, sweep = [0, 0], trans } = shapeInfo;
+	const { id, shape, pos, rot, size, sweep = [0, 0], trans } = shapeInfo;
 
 	const key = `shape-${id}`;
 
@@ -66,6 +66,16 @@ export function ShapeInput({
 				/>
 			</div>
 			<div className="input-wrapper">
+				<label>Rotation</label>
+				<input
+					name={`${key}-rot`}
+					type="number"
+					step={5}
+					value={rot}
+					onChange={(e) => updateShape(id, 'rot', e.target.value)}
+				/>
+			</div>
+			<div className="input-wrapper">
 				<label>Size</label>
 				<Vector2Input
 					name={`${key}-size`}
@@ -77,6 +87,7 @@ export function ShapeInput({
 				<label>Sweep</label>
 				<Vector2Input
 					name={`${key}-sweep`}
+					system="polar"
 					value={sweep}
 					onChange={(v) => updateShape(id, 'sweep', v)}
 				/>
