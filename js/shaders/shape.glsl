@@ -19,7 +19,7 @@ void main() {
 
 	vec3 sdf = vec3(0);
 	vec2 p = uv - pos;
-	p *= rot2D(rot / 180. * PI);
+	p *= rot2D(-rot / 180. * PI);
 	switch (shape) {
 		case 0:
 			sdf = sdgEllipse(p, size);

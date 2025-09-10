@@ -173,6 +173,9 @@ function App() {
 
 				draw(textureProgram, srcA, {
 					u_texture: fbiTemp.attachments[0],
+					pos: [0, 0],
+					origin: [0.5, 0.5],
+					rot: 0,
 				});
 				clearBuffer(fbiTemp);
 			};
@@ -241,20 +244,38 @@ function App() {
 			// draw texture to canvas
 			draw(textureProgram, null, {
 				u_texture: fbiC.attachments[0],
+				pos: [0, 0],
+				origin: [0.5, 0.5],
+				rot: 0,
 			});
 
 			draw(textureProgram, null, {
 				u_texture: fbiD.attachments[0],
+				pos: [0, 0],
+				origin: [0.5, 0.5],
+				rot: 0,
 			});
 			// console.timeEnd('render');
-			// handle = requestAnimationFrame(render);
+			handle = requestAnimationFrame(render);
 		}
 		handle = requestAnimationFrame(render);
 
 		return () => {
 			cancelAnimationFrame(handle);
 		};
-	}, [gl, shapes]);
+	}, [
+		gl,
+		shapes,
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		...[
+			shapeFrag,
+			shapeSweepFrag,
+			mergeFrag,
+			colorFrag,
+			solidColorFrag,
+			textureFrag,
+		],
+	]);
 
 	const updateShape = useCallback(
 		(id: number, key: string, value: unknown) => {
