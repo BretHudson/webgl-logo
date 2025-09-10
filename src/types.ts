@@ -5,8 +5,9 @@ export interface Uniforms {
 	sweep?: Vec2;
 }
 
+export type ShapeId = (typeof SHAPE)[keyof typeof SHAPE];
 export interface Shape {
-	shape: (typeof SHAPE)[keyof typeof SHAPE];
+	shape: ShapeId;
 	size: Vec2;
 	sweep?: Vec2;
 	pos?: Vec2;

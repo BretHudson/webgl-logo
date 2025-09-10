@@ -10,7 +10,7 @@ import colorFrag from '../js/shaders/color.glsl';
 import solidColorFrag from '../js/shaders/solid-color.glsl';
 import textureFrag from '../js/shaders/texture.glsl';
 import { hashShape, SHAPE } from './types';
-import type { Vec2, Shape, Uniforms } from './types';
+import type { Vec2, Shape, Uniforms, ShapeId } from './types';
 import { ShapeInput } from './ShapeInput';
 
 const sweep: Vec2 = [0.15, -0.15];
@@ -18,45 +18,42 @@ const rectSize: Vec2 = [0.1, 0.3];
 function App() {
 	const [gl, setGL] = useState<WebGL2RenderingContext>();
 
-	const shapes: Shape[] = useMemo(
-		() => [
-			{
-				shape: SHAPE.ELLIPSE,
-				size: [0.2, 0.4],
-				sweep,
-				pos: [-0.5, 0.5],
-				// trans: true,
-			},
-			{
-				shape: SHAPE.BOX,
-				size: rectSize,
-				sweep,
-				// trans: true,
-				pos: [0, 0],
-			},
-			{
-				shape: SHAPE.BOX,
-				size: rectSize,
-				trans: true,
-				pos: [0, 0],
-			},
-			{
-				shape: SHAPE.BOX,
-				pos: [0.2, 0.4],
-				size: [0.1, 0.1],
-				sweep,
-				// trans: true,
-			},
-			{
-				shape: SHAPE.BOX,
-				pos: [-0.2, -0.4],
-				size: [0.1, 0.1],
-				sweep,
-				// trans: true,
-			},
-		],
-		[],
-	);
+	const [shapes, setShapes] = useState<Shape[]>([
+		{
+			shape: SHAPE.ELLIPSE,
+			size: [0.2, 0.4],
+			sweep,
+			pos: [-0.5, 0.5],
+			// trans: true,
+		},
+		{
+			shape: SHAPE.BOX,
+			size: rectSize,
+			sweep,
+			// trans: true,
+			pos: [0, 0],
+		},
+		{
+			shape: SHAPE.BOX,
+			size: rectSize,
+			trans: true,
+			pos: [0, 0],
+		},
+		{
+			shape: SHAPE.BOX,
+			pos: [0.2, 0.4],
+			size: [0.1, 0.1],
+			sweep,
+			// trans: true,
+		},
+		{
+			shape: SHAPE.BOX,
+			pos: [-0.2, -0.4],
+			size: [0.1, 0.1],
+			sweep,
+			// trans: true,
+		},
+	]);
 
 	useEffect(() => {
 		twgl.setDefaults({ attribPrefix: 'a_' });
@@ -247,8 +244,23 @@ function App() {
 		<div className="grid">
 			<div>
 				{shapes.map((shape, i) => {
+					const onChange = (
+						e: React.ChangeEvent<HTMLSelectElement>,
+					) => {
+						const _shapes = [...shapes];
+						const { value } = e.target;
+						_shapes[i] = {
+							...shape,
+							shape: +value as ShapeId,
+						};
+						setShapes(_shapes);
+					};
 					return (
-						<ShapeInput key={hashShape(shape, i)} shape={shape} />
+						<ShapeInput
+							key={hashShape(shape, i)}
+							shape={shape}
+							onChange={onChange}
+						/>
 					);
 				})}
 			</div>
