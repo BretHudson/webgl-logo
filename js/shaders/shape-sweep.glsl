@@ -43,7 +43,7 @@ void main() {
 
 	vec3 sdf = vec3(1e6);
 
-	vec2 sweepV = sweep;// * rot2D(u_time * .25);
+	vec2 sweepV = vec2(sweep.x, 0) * rot2D(-sweep.y / 180.0 * PI);// * rot2D(u_time * .25);
 	float sweepLength = length(sweepV);
 
 	vec2 ro = (uv - pos) - sweepV;

@@ -19,7 +19,7 @@ export function ShapeInput({
 	canMoveUp,
 	canMoveDown,
 }: ShapeInputProps) {
-	const { id, shape, size, pos, sweep = [0, 0] } = shapeInfo;
+	const { id, shape, size, pos, sweep = [0, 0], trans } = shapeInfo;
 
 	const key = `shape-${id}`;
 
@@ -79,6 +79,14 @@ export function ShapeInput({
 					name={`${key}-sweep`}
 					value={sweep}
 					onChange={(v) => updateShape(id, 'sweep', v)}
+				/>
+			</div>
+			<div className="input-wrapper">
+				<label>Transparent</label>
+				<input
+					type="checkbox"
+					value={(trans ?? false).toString()}
+					onChange={(e) => updateShape(id, 'trans', e.target.checked)}
 				/>
 			</div>
 		</div>

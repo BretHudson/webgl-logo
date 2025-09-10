@@ -1,10 +1,12 @@
 type Vec2 = [number, number];
 export function Vector2Input({
 	name,
+	// system = 'cartesian',
 	value,
 	onChange,
 }: {
 	name: string;
+	system?: 'cartesian' | 'polar';
 	value: Vec2;
 	onChange: (v: Vec2) => void;
 }) {

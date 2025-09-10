@@ -13,7 +13,8 @@ import { ShapeInput } from './ShapeInput';
 import type { Shape, Uniforms, Vec2 } from './types';
 import { hashShape, SHAPE } from './types';
 
-const sweep: Vec2 = [0.15, -0.15];
+// const sweep: Vec2 = [0.15, -0.15];
+const sweep: Vec2 = [0.15, -45];
 const rectSize: Vec2 = [0.1, 0.3];
 function App() {
 	const [gl, setGL] = useState<WebGL2RenderingContext>();
@@ -36,13 +37,6 @@ function App() {
 			pos: [0, 0],
 		},
 		{
-			id: 2,
-			shape: SHAPE.BOX,
-			size: rectSize,
-			trans: true,
-			pos: [0, 0],
-		},
-		{
 			id: 3,
 			shape: SHAPE.BOX,
 			pos: [0.2, 0.4],
@@ -60,7 +54,7 @@ function App() {
 		},
 	]);
 
-	const [shapeOrder, setShapeOrder] = useState([0, 1, 2, 3, 4]);
+	const [shapeOrder, setShapeOrder] = useState([0, 1, 3, 4]);
 
 	useEffect(() => {
 		twgl.setDefaults({ attribPrefix: 'a_' });
@@ -289,7 +283,8 @@ function App() {
 				{shapeOrder.map((id, i) => {
 					const first = i === 0;
 					const last = i === shapeOrder.length - 1;
-					const shape = shapes[id];
+					const shape = shapes.find(({ id: _id }) => _id === id);
+					if (!shape) throw new Error('???');
 					return (
 						<ShapeInput
 							key={hashShape(shape)}
