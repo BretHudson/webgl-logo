@@ -5,10 +5,10 @@ precision mediump float;
 #include "util/common.glsl"
 #include "util/sdf.glsl"
 
-uniform vec2 u_resolution;
+uniform vec4 u_color;
 
 out vec4 fragColor;
 
 void main() {
-	fragColor = vec4(vec3(.5, .1, .0), 1.);
+	fragColor = u_color;
 }

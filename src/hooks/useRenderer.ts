@@ -142,7 +142,11 @@ export function useRenderer(ref: React.RefObject<GLRef>) {
 
 			// draw background color
 			clearBuffer(null);
-			// draw(solidColorProgram, null);
+			draw(solidColorProgram, null, {
+				u_color: [0.5, 0.1, 0.0, 1],
+			});
+
+			const purpleRGB = [1, 0.5, 1];
 
 			const drawShape = (shape: Shape, target: twgl.FramebufferInfo) => {
 				if (shape.sweep && shape.sweep[0] > 0) {
@@ -150,7 +154,7 @@ export function useRenderer(ref: React.RefObject<GLRef>) {
 					const fbiB = alloc();
 					draw(shapeSweepProgram, fbiA, shape);
 					draw(colorProgram, fbiB, {
-						color: [1, 0.5, 1, 0.75],
+						color: [...purpleRGB, 0.75],
 						maskTexture: fbiA.attachments[0],
 					});
 					draw(textureProgram, target, {
@@ -165,7 +169,7 @@ export function useRenderer(ref: React.RefObject<GLRef>) {
 					const fbiB = alloc();
 					draw(shapeProgram, fbiA, shape);
 					draw(colorProgram, fbiB, {
-						color: [1, 0.5, 1, 1],
+						color: [...purpleRGB, 1],
 						maskTexture: fbiA.attachments[0],
 					});
 					draw(textureProgram, target, {
