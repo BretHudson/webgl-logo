@@ -51,10 +51,11 @@ void main() {
 
 	float t = 0.;
 	for (int i = 0; i < 1000; ++i) {
-		vec2 p = ro + rd * t;
-		p *= rot2D(-rot / 180. * PI);
+		vec4 p = vec4(ro + rd * t, 0., 1.);
+		// p *= rot2D(-rot / 180. * PI);
+		p *= modelViewMatrix(vec2(0), -rot / 180. * PI);
 
-		float d = map(p, size).x;
+		float d = map(p.xy, size).x;
 		t += d;
 		if (abs(d) < MIN_DIST || t > MAX_DIST)
 			break;

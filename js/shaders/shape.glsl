@@ -9,6 +9,7 @@ precision mediump float;
 uniform vec2 u_resolution;
 uniform int shape;
 uniform vec2 pos;
+uniform vec2 origin;
 uniform float rot;
 uniform vec2 size;
 
@@ -18,14 +19,14 @@ void main() {
 	vec2 uv = getSignedUV(u_resolution);
 
 	vec3 sdf = vec3(0);
-	vec2 p = uv - pos;
-	p *= rot2D(-rot / 180. * PI);
+	vec4 p = vec4(uv - pos, 0., 1.);
+	p *= modelViewMatrix(vec2(0), -rot / 180. * PI);
 	switch (shape) {
 		case 1:
-			sdf = sdgEllipse(p, size);
+			sdf = sdgEllipse(p.xy, size);
 			break;
 		case 2:
-			sdf.x = sdBox(p, size);
+			sdf.x = sdBox(p.xy, size);
 			break;
 	}
 

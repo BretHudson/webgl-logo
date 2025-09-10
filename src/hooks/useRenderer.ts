@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import * as twgl from 'twgl.js';
-import Victor from 'victor';
 import basicVert from '../../js/shaders/basic.vert';
 import colorFrag from '../../js/shaders/color.glsl';
 import mergeFrag from '../../js/shaders/merge.glsl';
@@ -8,15 +7,20 @@ import shapeSweepFrag from '../../js/shaders/shape-sweep.glsl';
 import shapeFrag from '../../js/shaders/shape.glsl';
 import solidColorFrag from '../../js/shaders/solid-color.glsl';
 import textureFrag from '../../js/shaders/texture.glsl';
-import type { Shape, Uniforms } from '../types';
+import type { Shape } from '../types';
+
+export interface ShapeOrderItem {
+	nodeId: number;
+	childrenItems?: ShapeOrderItem[];
+}
 
 export interface GLRef {
 	shapes: Shape[];
-	shapeOrder: (number | number[])[];
+	shapeOrder: ShapeOrderItem[];
 }
 
 export function useRenderer(ref: React.RefObject<GLRef>) {
-	const [gl, setGL] = useState<WebGL2RenderingContext>();
+	const [gl, setGL] = useState<WebGL2RenderingContext | null>(null);
 
 	useEffect(() => {
 		twgl.setDefaults({ attribPrefix: 'a_' });
@@ -27,7 +31,7 @@ export function useRenderer(ref: React.RefObject<GLRef>) {
 		setGL(gl);
 
 		return () => {
-			setGL(undefined);
+			setGL(null);
 		};
 	}, []);
 
@@ -54,11 +58,21 @@ export function useRenderer(ref: React.RefObject<GLRef>) {
 			textureFrag,
 		].map(createFragShader);
 
-		const fbis = Array.from({ length: 6 }, () =>
+		const fbis = Array.from({ length: 16 }, () =>
 			twgl.createFramebufferInfo(gl),
 		);
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		const [fbiTemp, fbiTemp2, fbiA, fbiB, fbiC, fbiD] = fbis;
+		// a  eslint-disable-next-line @typescript-eslint/no-unused-vars
+		// const [fbiTemp, fbiTemp2, fbiA, fbiB, fbiC, fbiD, fbiX, fbiY] = fbis;
+		const freeFbis = [...fbis];
+		const alloc = () => {
+			const fbi = freeFbis.pop();
+			if (!fbi) throw new Error('all out of framebuffers');
+			clearBuffer(fbi);
+			return fbi;
+		};
+		const free = (fbi: twgl.FramebufferInfo) => {
+			freeFbis.push(fbi);
+		};
 
 		const arrays = {
 			position: [
@@ -84,7 +98,7 @@ export function useRenderer(ref: React.RefObject<GLRef>) {
 		function render(time: number) {
 			if (!gl) return;
 
-			const { shapes } = ref.current;
+			const { shapes, shapeOrder } = ref.current;
 
 			// console.time('render');
 			twgl.resizeCanvasToDisplaySize(gl.canvas as HTMLCanvasElement);
@@ -102,6 +116,9 @@ export function useRenderer(ref: React.RefObject<GLRef>) {
 			const commonUniforms = {
 				u_time: time * 0.001,
 				u_resolution: resolution,
+				pos: [0, 0],
+				origin: [0, 0],
+				rot: 0,
 			};
 
 			const draw = (
@@ -123,6 +140,7 @@ export function useRenderer(ref: React.RefObject<GLRef>) {
 				srcA: twgl.FramebufferInfo,
 				srcB: twgl.FramebufferInfo,
 			) => {
+				const fbiTemp = alloc();
 				draw(mergeProgram, fbiTemp, {
 					u_textureA: srcA.attachments[0],
 					u_textureB: srcB.attachments[0],
@@ -130,90 +148,88 @@ export function useRenderer(ref: React.RefObject<GLRef>) {
 
 				draw(textureProgram, srcA, {
 					u_texture: fbiTemp.attachments[0],
-					pos: [0, 0],
 					origin: [0.5, 0.5],
-					rot: 0,
 				});
-				clearBuffer(fbiTemp);
+				free(fbiTemp);
 			};
-
-			const sweep = (
-				programInfo: twgl.ProgramInfo,
-				fbi: twgl.FramebufferInfo,
-				uniforms: Uniforms = {},
-			) => {
-				clearBuffer(fbi);
-
-				const { pos = [0, 0] } = uniforms;
-
-				programInfo = shapeSweepProgram;
-
-				const v = Victor.fromArray(pos);
-				// const rd = Victor.fromArray(sweep);
-
-				draw(programInfo, fbi, {
-					...uniforms,
-					pos: v.toArray(),
-				});
-			};
-
-			// draw sweeps
-			const sweptShapes = shapes.filter(({ sweep }) => sweep?.[0]);
-			if (sweptShapes.length > 0) {
-				sweep(shapeProgram, fbiA, sweptShapes[0]);
-				for (let i = 1, n = sweptShapes.length; i < n; ++i) {
-					sweep(shapeProgram, fbiB, sweptShapes[i]);
-					merge(fbiA, fbiB);
-					clearBuffer(fbiB);
-				}
-			}
-
-			// draw color
-			draw(colorProgram, fbiC, {
-				color: [1, 0.5, 1, 0.8],
-				// color: [1, 0.5, 1, 1],
-				maskTexture: fbiA.attachments[0],
-			});
-
-			// draw shapes
-
-			clearBuffer(fbiA);
-			clearBuffer(fbiB);
-
-			const solidShapes = shapes.filter(({ trans }) => !trans);
-			if (solidShapes.length > 0) {
-				draw(shapeProgram, fbiA, solidShapes[0]);
-				for (let i = 1, n = solidShapes.length; i < n; ++i) {
-					draw(shapeProgram, fbiB, solidShapes[i]);
-					merge(fbiA, fbiB);
-					clearBuffer(fbiB);
-				}
-			}
-
-			draw(colorProgram, fbiD, {
-				color: [1, 0.5, 1, 1],
-				maskTexture: fbiA.attachments[0],
-			});
 
 			// draw background color
 			draw(solidColorProgram, null);
 
-			// draw texture to canvas
-			draw(textureProgram, null, {
-				u_texture: fbiC.attachments[0],
-				pos: [0, 0],
-				origin: [0.5, 0.5],
-				rot: 0,
-			});
+			const drawShape = (shape: Shape, target: twgl.FramebufferInfo) => {
+				if (shape.sweep && shape.sweep[0] > 0) {
+					const fbiA = alloc();
+					const fbiB = alloc();
+					draw(shapeSweepProgram, fbiA, shape);
+					draw(colorProgram, fbiB, {
+						color: [1, 0.5, 1, 0.8],
+						maskTexture: fbiA.attachments[0],
+					});
+					draw(textureProgram, target, {
+						u_texture: fbiB.attachments[0],
+						origin: [0.5, 0.5],
+					});
+					free(fbiA);
+					free(fbiB);
+				}
+
+				if (!shape.trans) {
+					const fbiA = alloc();
+					const fbiB = alloc();
+					draw(shapeProgram, fbiA, shape);
+					draw(colorProgram, fbiB, {
+						color: [1, 0.5, 1, 1],
+						maskTexture: fbiA.attachments[0],
+					});
+					draw(textureProgram, target, {
+						u_texture: fbiB.attachments[0],
+					});
+					free(fbiA);
+					free(fbiB);
+				}
+			};
+
+			const drawItems = (
+				items: ShapeOrderItem[],
+				target: twgl.FramebufferInfo,
+			) => {
+				for (let i = 0; i < items.length; ++i) {
+					const fbi = alloc();
+					const item = items[i];
+
+					const shape = shapes.find(({ id }) => id === item.nodeId);
+					if (!shape) throw new Error('???');
+
+					if (shape.shape > 0) {
+						drawShape(shape, fbi);
+					} else if (item.childrenItems) {
+						const groupFbi = alloc();
+						drawItems(item.childrenItems, groupFbi);
+						draw(textureProgram, fbi, {
+							u_texture: groupFbi.attachments[0],
+							...shape,
+							origin: [0.5, 0.5],
+						});
+						free(groupFbi);
+					}
+					merge(target, fbi);
+					free(fbi);
+				}
+			};
+
+			const fbi = alloc();
+			drawItems(shapeOrder, fbi);
 
 			draw(textureProgram, null, {
-				u_texture: fbiD.attachments[0],
+				u_texture: fbi.attachments[0],
 				pos: [0, 0],
 				origin: [0.5, 0.5],
 				rot: 0,
 			});
+			free(fbi);
+
 			// console.timeEnd('render');
-			handle = requestAnimationFrame(render);
+			// handle = requestAnimationFrame(render);
 		}
 		handle = requestAnimationFrame(render);
 

@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Canvas } from './Canvas';
-import { useRenderer, type GLRef } from './hooks/useRenderer';
+import {
+	useRenderer,
+	type GLRef,
+	type ShapeOrderItem,
+} from './hooks/useRenderer';
 import { ShapeInput } from './ShapeInput';
 import type { Shape, Vec2 } from './types';
 import { hashShape, SHAPE } from './types';
@@ -11,20 +15,30 @@ const rectSize: Vec2 = [0.1, 0.3];
 function App() {
 	const [shapes, setShapes] = useState<Shape[]>([
 		{
+			id: -2,
+			shape: SHAPE.GROUP,
+			pos: [0, 0],
+			// rot: 0,
+			rot: 100,
+			size: [0, 0],
+			sweep: [0, 0],
+		},
+		{
 			id: -1,
 			shape: SHAPE.GROUP,
-			pos: [-0.5, 0.5],
-			rot: 0,
-			size: [0.2, 0.4],
-			sweep: [...sweep],
+			pos: [0, 0],
+			// rot: 0,
+			rot: 100,
+			size: [0, 0],
+			sweep: [0, 0],
 		},
 		{
 			id: 0,
 			shape: SHAPE.ELLIPSE,
-			pos: [-0.5, 0.5],
-			rot: 0,
-			size: [0.2, 0.4],
-			// sweep: [...sweep],
+			pos: [0.4, 0],
+			rot: 180,
+			size: [0.2, 0.2],
+			sweep: [...sweep],
 		},
 		{
 			id: 1,
@@ -60,7 +74,17 @@ function App() {
 		},
 	]);
 
-	const [shapeOrder, setShapeOrder] = useState([2, [-1, 0, 1], 3, 4]);
+	const [shapeOrder, setShapeOrder] = useState<ShapeOrderItem[]>([
+		{ nodeId: 2 },
+		{ nodeId: 4 },
+		{ nodeId: 3 },
+		{
+			nodeId: -2,
+			childrenItems: [
+				{ nodeId: -1, childrenItems: [{ nodeId: 0 }, { nodeId: 1 }] },
+			],
+		},
+	]);
 	const glRef = useRef<GLRef>({
 		shapes,
 		shapeOrder,
@@ -85,10 +109,8 @@ function App() {
 
 	useEffect(() => {
 		glRef.current.shapes = shapes;
-	}, [shapes]);
-	useEffect(() => {
 		glRef.current.shapeOrder = shapeOrder;
-	}, [shapeOrder]);
+	}, [shapes, shapeOrder]);
 
 	useRenderer(glRef);
 
@@ -109,18 +131,14 @@ function App() {
 		});
 	}, []);
 
-	function mapShapes(id: number | number[], i: number) {
+	function mapShapes(item: ShapeOrderItem, i: number) {
+		const { nodeId, childrenItems } = item;
+
 		const first = i === 0;
 		const last = i === shapeOrder.length - 1;
 
-		const [targetId, childIds] = Array.isArray(id)
-			? [id[0], id.slice(1)]
-			: [id, undefined];
-
-		const shape = shapes.find(({ id }) => id === targetId);
+		const shape = shapes.find(({ id }) => id === nodeId);
 		if (!shape) throw new Error('???');
-
-		const children = childIds && childIds.map(mapShapes);
 
 		return (
 			<ShapeInput
@@ -131,7 +149,7 @@ function App() {
 				canMoveUp={!first}
 				canMoveDown={!last}
 			>
-				{children}
+				{childrenItems?.map(mapShapes)}
 			</ShapeInput>
 		);
 	}
