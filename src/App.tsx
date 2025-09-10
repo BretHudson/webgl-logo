@@ -23,34 +23,30 @@ function App() {
 		{
 			id: 0,
 			shape: SHAPE.ELLIPSE,
-			size: [0.2, 0.4],
-			sweep,
 			pos: [-0.5, 0.5],
-			// trans: true,
+			size: [0.2, 0.4],
+			sweep: [...sweep],
 		},
 		{
 			id: 1,
 			shape: SHAPE.BOX,
-			size: rectSize,
-			sweep,
-			// trans: true,
 			pos: [0, 0],
+			size: [...rectSize],
+			sweep: [...sweep],
 		},
 		{
 			id: 3,
 			shape: SHAPE.BOX,
 			pos: [0.2, 0.4],
 			size: [0.1, 0.1],
-			sweep,
-			// trans: true,
+			sweep: [...sweep],
 		},
 		{
 			id: 4,
 			shape: SHAPE.BOX,
 			pos: [-0.2, -0.4],
 			size: [0.1, 0.1],
-			sweep,
-			// trans: true,
+			sweep: [...sweep],
 		},
 	]);
 
@@ -190,7 +186,7 @@ function App() {
 			};
 
 			// draw sweeps
-			const sweptShapes = shapes.filter(({ sweep }) => sweep);
+			const sweptShapes = shapes.filter(({ sweep }) => sweep?.[0]);
 			if (sweptShapes.length > 0) {
 				sweep(shapeProgram, fbiA, sweptShapes[0]);
 				for (let i = 1, n = sweptShapes.length; i < n; ++i) {
