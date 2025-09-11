@@ -120,15 +120,17 @@ function App() {
 
 	const moveShape = useCallback((id: number, dir: -1 | 1) => {
 		setShapeOrder((shapeOrder) => {
-			const index = shapeOrder.indexOf(id);
-			// TODO(bret): handle nested items
-			if (index === -1) return shapeOrder;
+			const index = shapeOrder.findIndex(({ nodeId }) => nodeId === id);
+			if (index === -1) {
+				// TODO(bret): handle nested items
+				return shapeOrder;
+			}
 
 			const newIndex = index + dir;
 			if (newIndex < 0 || newIndex >= shapeOrder.length)
 				return shapeOrder;
 
-			const newShapeOrder = [...shapeOrder];
+			const newShapeOrder = structuredClone(shapeOrder);
 			const item = newShapeOrder.splice(index, 1);
 			newShapeOrder.splice(newIndex, 0, ...item);
 			return newShapeOrder;
